@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html ng-app="nLinkSim">
+
+<head>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.5/angular.min.js"></script>
+	<script>
+
+		var nLinkSim = angular.module('nLinkSim', []);
+		nLinkSim.controller('mainController', function ($scope, $http, $interval) {
+
+			$scope.svg = document.querySelector('svg');
+
+			//array of manipulator link lengths
+			$scope.lens = [60, 60, 50, 50, 40, 30, 30];
+			// Create an SVGPoint for future math
+			$scope.pt = $scope.svg.createSVGPoint();
+
+			// Gets point in global SVG space
+			$scope.cursorPoint = function (evt) {
+				$scope.pt.x = evt.clientX; $scope.pt.y = evt.clientY;
+				return $scope.pt.matrixTransform($scope.svg.getScreenCTM().inverse());
+			}//cursoPoint
+
+			//mousemove handler
+			$scope.m = function (evt) {
+				$scope.G = $scope.cursorPoint(evt);
+			}///m
+
+			$scope.initialize = function () {
+				//initialize angles to 0
+				$scope.angs = [];
+				for (i = 0; i < $scope.lens.length; i++) {
+					$scope.angs[i] = 0;
+				}
+			}
+
+
+			//forward kinematics, returns start point and manipulator endpoints
+			$scope.showrobot = function (angs, lens) {
+				var screen = $scope.svg.getBoundingClientRect();
+				$scope.xc = screen.width / 2;
+				$scope.yc = screen.height / 2;
+				var pts = [];
+				//center robot at screen center
+				pts[0] = { x: $scope.xc, y: $scope.yc };
+				var angsum = 0;
+
+				for (i = 0; i < angs.length; i++) {
+					angsum += angs[i];
+					pts[i + 1] = {};
+					pts[i + 1].x = pts[i].x + lens[i] * Math.cos(angsum);
+					pts[i + 1].y = pts[i].y + lens[i] * Math.sin(angsum);
+				}
+				$scope.pts = pts;
+			}
+
+			$scope.initialize();
+			$scope.showrobot($scope.angs, $scope.lens);
+
+		}); //controller
+
+
+
+	</script>
+
+</head>
+
+<body ng-controller="mainController">
+
+	<!-- live display of angles -->
+	<div style="position:absolute;top:0;left:0;padding:1em;">
+		<p ng-repeat="a in angs track by $index">{{$index}}:{{a*180/3.14159}}</p>
+	</div>
+	<svg id="mydrawing" ng-mousemove="m($event)" style="position:absolute;top:0;left:0;width:100%;height:100%">
+		<g ng-repeat="r in pts">
+			<line ng-if="$index" style="stroke:{{$even?'red':'blue'}};stroke-width:{{2*(pts.length-$index)}}" ng-attr-x1="{{ pts[$index-1].x }}"
+			 ng-attr-y1="{{ pts[$index-1].y }}" ng-attr-x2="{{r.x}}" ng-attr-y2="{{r.y}}"></line>
+		</g>
+		<circle ng-attr-cx="{{G.x}}" ng-attr-cy="{{G.y}}" r="5" fill="green"></circle>
+
+	</svg>
+
+
+
+</body>
+
+</html>
