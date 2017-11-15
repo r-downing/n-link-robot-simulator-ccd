@@ -11,7 +11,7 @@
 			$scope.svg = document.querySelector('svg');
 
 			//array of manipulator link lengths
-			$scope.lens = [60, 60, 50, 50, 40, 30, 30];
+			$scope.lens = [60, 60, 50, 40, 30, 30];
 			// Create an SVGPoint for future math
 			$scope.pt = $scope.svg.createSVGPoint();
 
@@ -65,7 +65,8 @@
 				$scope.gangs = JSON.parse ( JSON.stringify($scope.angs) );
 				var jn = 0;
 				var gpts = JSON.parse(JSON.stringify($scope.pts));
-				while($scope.d2(gpts[gpts.length-1], $scope.G) > 1){
+				var delta;
+				while($scope.d2(gpts[gpts.length-1], $scope.G) > 11){
 					console.log("loop");
 					var e = gpts[gpts.length-1];
 					//console.log(e);
@@ -73,12 +74,14 @@
 					//console.log(j);
 					var t = $scope.G;
 
-					$scope.gangs[jn] += Math.atan2(((e.x-j.x)*(t.y-j.y) - (e.y-j.y)*(t.x-j.x)), ((e.x-j.x)*(t.x-j.x)+(e.y-j.y)*(t.y-j.y)))/10;
+					delta = Math.atan2(((e.x-j.x)*(t.y-j.y) - (e.y-j.y)*(t.x-j.x)), ((e.x-j.x)*(t.x-j.x)+(e.y-j.y)*(t.y-j.y)));//10;
 
-					if((gpts.length-2-jn)!=0){
-					//	if($scope.gangs[jn]> 120*Math.PI/180) $scope.gangs[jn] = 120*Math.PI/180;
-					//	if($scope.gangs[jn]< -120*Math.PI/180) $scope.gangs[jn] = -120*Math.PI/180;
-					}
+					//if((gpts.length-2-jn)!=0){
+						if(delta > Math.PI/180) delta = Math.PI/180;
+						if(delta < -Math.PI/180) delta = -Math.PI/180;
+					//}
+
+					$scope.gangs[jn] += delta;
 
 					gpts = $scope.showrobot($scope.gangs, $scope.lens);
 					jn= (jn+1)%$scope.angs.length;
