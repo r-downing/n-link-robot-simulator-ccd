@@ -24,6 +24,7 @@
 			//mousemove handler
 			$scope.m = function (evt) {
 				$scope.G = $scope.cursorPoint(evt);
+				$scope.ccd();
 			}///m
 
 			$scope.initialize = function () {
@@ -51,11 +52,45 @@
 					pts[i + 1].x = pts[i].x + lens[i] * Math.cos(angsum);
 					pts[i + 1].y = pts[i].y + lens[i] * Math.sin(angsum);
 				}
-				$scope.pts = pts;
+				return pts;
 			}
 
+			//returns distance squared betw p1 and p2
+			$scope.d2 = function(p1, p2){
+				return (p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y);
+			}//d2
+
+			//CCD calculating function
+			$scope.ccd = function(){
+				$scope.gangs = JSON.parse ( JSON.stringify($scope.angs) );
+				var jn = 0;
+				var gpts = JSON.parse(JSON.stringify($scope.pts));
+				while($scope.d2(gpts[gpts.length-1], $scope.G) > 1){
+					console.log("loop");
+					var e = gpts[gpts.length-1];
+					//console.log(e);
+					var j = gpts[gpts.length-2-jn];
+					//console.log(j);
+					var t = $scope.G;
+
+					$scope.gangs[jn] += Math.atan2(((e.x-j.x)*(t.y-j.y) - (e.y-j.y)*(t.x-j.x)), ((e.x-j.x)*(t.x-j.x)+(e.y-j.y)*(t.y-j.y)))/10;
+
+					if((gpts.length-2-jn)!=0){
+					//	if($scope.gangs[jn]> 120*Math.PI/180) $scope.gangs[jn] = 120*Math.PI/180;
+					//	if($scope.gangs[jn]< -120*Math.PI/180) $scope.gangs[jn] = -120*Math.PI/180;
+					}
+
+					gpts = $scope.showrobot($scope.gangs, $scope.lens);
+					jn= (jn+1)%$scope.angs.length;
+				}
+
+				$scope.pts = gpts;
+				$scope.angs = $scope.gangs;
+
+			}//ccd
+
 			$scope.initialize();
-			$scope.showrobot($scope.angs, $scope.lens);
+			$scope.pts = $scope.showrobot($scope.angs, $scope.lens);
 
 		}); //controller
 
@@ -69,15 +104,15 @@
 
 	<!-- live display of angles -->
 	<div style="position:absolute;top:0;left:0;padding:1em;">
-		<p ng-repeat="a in angs track by $index">{{$index}}:{{a*180/3.14159}}</p>
+		<p ng-repeat="a in angs track by $index">{{$index}}:{{a*180/3.1415927 | number: 3}}</p>
 	</div>
-	<svg id="mydrawing" ng-mousemove="m($event)" style="position:absolute;top:0;left:0;width:100%;height:100%">
+
+	<svg id="mydrawing" ng-click="m($event)" style="position:absolute;top:0;left:0;width:100%;height:100%">
 		<g ng-repeat="r in pts">
 			<line ng-if="$index" style="stroke:{{$even?'red':'blue'}};stroke-width:{{2*(pts.length-$index)}}" ng-attr-x1="{{ pts[$index-1].x }}"
 			 ng-attr-y1="{{ pts[$index-1].y }}" ng-attr-x2="{{r.x}}" ng-attr-y2="{{r.y}}"></line>
 		</g>
 		<circle ng-attr-cx="{{G.x}}" ng-attr-cy="{{G.y}}" r="5" fill="green"></circle>
-
 	</svg>
 
 
